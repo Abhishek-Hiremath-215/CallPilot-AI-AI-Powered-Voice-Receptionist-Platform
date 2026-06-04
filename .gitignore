@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/__pycache__/
+
+# Environment variables
+backend/.env
+frontend/.env.local
+frontend/.env.production.local
+.env
+
+# Build outputs
+frontend/dist/
+dist/
+
+# Piper TTS binaries (large, downloaded locally)
+backend/piper/
+
+# Databases & logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Temp & System
+tmp/
+.config/
+.tempmediaStorage/
+.system_generated/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
