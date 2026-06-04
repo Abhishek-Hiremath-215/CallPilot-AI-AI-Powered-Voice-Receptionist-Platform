@@ -262,7 +262,7 @@ const handleMockRequest = async (url, options = {}) => {
       saveUsers(users);
     }
     setAuth("mock-jwt-token-12345", u);
-    return jsonResponse({ access_token: "mock-jwt-token-12345", token_type: "bearer" });
+    return jsonResponse({ access_token: "mock-jwt-token-12345", token_type: "bearer", user: u });
   }
 
   // 2. Auth Register
@@ -478,14 +478,31 @@ window.fetch = async (url, options = {}) => {
 };
 
 // ========== AUTH HELPERS ==========
-export const getToken = () => localStorage.getItem('auth_token');
+export const getToken = () => {
+  const token = localStorage.getItem('auth_token');
+  return token === 'undefined' ? null : token;
+};
 export const getUser = () => {
   const u = localStorage.getItem('auth_user');
-  return u ? JSON.parse(u) : null;
+  if (!u || u === 'undefined') return null;
+  try {
+    return JSON.parse(u);
+  } catch (e) {
+    return null;
+  }
 };
 export const setAuth = (token, user) => {
-  localStorage.setItem('auth_token', token);
-  localStorage.setItem('auth_user', JSON.stringify(user));
+  if (token && token !== 'undefined') {
+    localStorage.setItem('auth_token', token);
+  } else {
+    localStorage.removeItem('auth_token');
+  }
+  
+  if (user && user !== 'undefined') {
+    localStorage.setItem('auth_user', JSON.stringify(user));
+  } else {
+    localStorage.removeItem('auth_user');
+  }
 };
 export const clearAuth = () => {
   localStorage.removeItem('auth_token');
