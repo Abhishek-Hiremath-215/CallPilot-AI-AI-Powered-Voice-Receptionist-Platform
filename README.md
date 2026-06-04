@@ -101,7 +101,14 @@ sequenceDiagram
    OPENAI_API_KEY=your_openai_api_key_here
    DATABASE_URL=postgresql://username:password@localhost:5432/database_name
    ```
-5. Run the FastAPI server:
+5. **Piper TTS Setup (Local Voice Generation)**:
+   * Download the standalone Piper Windows release (`piper_windows_amd64.zip`) from the [Rhasspy Piper Releases Page](https://github.com/rhasspy/piper/releases).
+   * Create a folder `backend/piper/` and extract the zip contents so that the executable is located at:
+     `backend/piper/piper/piper/piper.exe`
+   * Download your preferred voice model `.onnx` file and its corresponding `.onnx.json` config file (e.g., `en_US-ryan-medium.onnx` and `en_US-ryan-medium.onnx.json`) from the [Rhasspy Piper Models Repository](https://github.com/rhasspy/piper/releases/tag/v0.0.2).
+   * Place both voice files inside the directory:
+     `backend/piper/piper/piper/`
+6. Run the FastAPI server:
    ```bash
    python -m uvicorn app.main:app --reload --port 8000
    ```
