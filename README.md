@@ -1,6 +1,6 @@
 # CallPilot AI - AI-Powered Voice Receptionist Platform
 
-**Live Demo URL:** [https://call-pilot.netlify.app/](https://call-pilot.netlify.app/)
+**Live Demo URL: [Launch Live Netlify Demo](https://call-pilot.netlify.app/)**
 
 CallPilot AI is a professional, full-stack platform that allows users to deploy personalized, interactive AI voice receptionists. The AI receptionists handle calls when users are busy, greet callers according to custom prompts, hold natural conversations, and automatically structure and log customer details into organized tickets.
 
