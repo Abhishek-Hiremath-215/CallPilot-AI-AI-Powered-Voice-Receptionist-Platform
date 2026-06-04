@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { chatAPI, callsAPI, authAPI, getUser, setAuth, clearAuth, getToken } from '../services/api';
+import { chatAPI, callsAPI, authAPI, getUser, setAuth, clearAuth, getToken, isDemoMode } from '../services/api';
 
 export default function Dashboard() {
     const [conversations, setConversations] = useState([]);
@@ -197,6 +197,44 @@ export default function Dashboard() {
                             <h1 className="text-2xl md:text-5xl font-bold text-txt tracking-tight px-2">Welcome, {user?.display_name || 'User'}! 👋</h1>
                         </div>
                         <p className="text-txt-dim text-sm md:text-lg mb-8 md:mb-12 max-w-lg leading-relaxed px-4">Your CallPilot AI Voice Agent is ready. Manage settings, monitor call logs, and review collected customer data.</p>
+
+                        {isDemoMode() && (
+                            <div className="mb-8 p-6 glass border border-accent/20 rounded-3xl max-w-2xl text-left text-sm leading-relaxed space-y-3 animate-fade-in relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 blur-xl rounded-full" />
+                                <div className="flex items-center gap-2.5 font-bold text-accent">
+                                    <span className="text-base">🚀 Standalone Demo Instructions</span>
+                                </div>
+                                <p className="text-txt-dim text-xs md:text-sm">
+                                    This app is running in offline <strong>Demo Mode</strong> completely client-side in your browser. Follow these steps to test the AI voice receptionist:
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                    <div className="p-3 bg-white/5 border border-white/5 rounded-xl space-y-1">
+                                        <h4 className="font-bold text-txt text-xs flex items-center gap-1.5">📞 1. Test AI Voice Call</h4>
+                                        <p className="text-txt-dimmer text-[11px]">
+                                            Find any user in the directory below and click the phone icon to launch a voice call. Speak into your microphone to talk to the AI, then hang up.
+                                        </p>
+                                    </div>
+                                    <div className="p-3 bg-white/5 border border-white/5 rounded-xl space-y-1">
+                                        <h4 className="font-bold text-txt text-xs flex items-center gap-1.5">📊 2. View Logged Tickets</h4>
+                                        <p className="text-txt-dimmer text-[11px]">
+                                            Go to the **Report** page from the sidebar to see the contact details, summaries, and sentiments extracted from your voice calls!
+                                        </p>
+                                    </div>
+                                    <div className="p-3 bg-white/5 border border-white/5 rounded-xl space-y-1">
+                                        <h4 className="font-bold text-txt text-xs flex items-center gap-1.5">💬 3. Live Chat with AI</h4>
+                                        <p className="text-txt-dimmer text-[11px]">
+                                            Click the chat icon next to a user in the directory. Send text messages and receive automated replies simulating their receptionist agent.
+                                        </p>
+                                    </div>
+                                    <div className="p-3 bg-white/5 border border-white/5 rounded-xl space-y-1">
+                                        <h4 className="font-bold text-txt text-xs flex items-center gap-1.5">⚙️ 4. Toggle Real Server</h4>
+                                        <p className="text-txt-dimmer text-[11px]">
+                                            To run with a live local backend instead, sign out to the login page and click the mode switch toggle in the bottom right corner.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Responsive Stats Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8 mb-8 md:mb-12 w-full px-4 max-w-2xl mx-auto">

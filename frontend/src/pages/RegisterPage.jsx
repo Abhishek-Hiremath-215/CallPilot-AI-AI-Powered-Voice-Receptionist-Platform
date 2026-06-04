@@ -31,12 +31,12 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-primary flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="h-screen bg-primary flex flex-col items-center py-12 px-4 relative overflow-x-hidden overflow-y-auto">
             {/* Background Orbs */}
             <div className="absolute top-1/4 -right-20 w-80 h-80 bg-accent/20 blur-[100px] rounded-full" />
             <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-warning/10 blur-[100px] rounded-full" />
 
-            <div className="w-full max-w-md animate-fade-in relative z-10">
+            <div className="w-full max-w-md animate-fade-in relative z-10 my-auto">
                 <div className="glass rounded-[32px] p-8 md:p-10 shadow-2xl">
                     <div className="text-center mb-8">
                         <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-lg shadow-accent/20">

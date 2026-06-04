@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI, setAuth } from '../services/api';
+import { authAPI, setAuth, isDemoMode } from '../services/api';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -23,14 +23,13 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
-
     return (
-        <div className="min-h-screen bg-primary flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="h-screen bg-primary flex flex-col items-center py-12 px-4 relative overflow-x-hidden overflow-y-auto">
             {/* Background Orbs */}
             <div className="absolute top-1/4 -left-20 w-80 h-80 bg-accent/20 blur-[100px] rounded-full" />
             <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-success/10 blur-[100px] rounded-full" />
 
-            <div className="w-full max-w-md animate-fade-in relative z-10">
+            <div className="w-full max-w-md animate-fade-in relative z-10 my-auto">
                 <div className="glass rounded-[32px] p-8 md:p-10 shadow-2xl">
                     <div className="text-center mb-10">
                         <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-lg shadow-accent/20">
@@ -39,6 +38,22 @@ export default function LoginPage() {
                         <h1 className="text-3xl font-bold text-txt tracking-tight">CallPilot AI</h1>
                         <p className="text-txt-dim mt-2">AI-Powered Voice Receptionist Platform</p>
                     </div>
+
+                    {isDemoMode() && (
+                        <div className="mb-6 p-4 bg-accent/10 border border-accent/20 rounded-2xl text-txt text-xs leading-relaxed space-y-2 animate-fade-in text-left">
+                            <div className="flex items-center gap-2 font-bold text-accent">
+                                <span>🚀 Standalone Demo Active</span>
+                            </div>
+                            <p className="text-txt-dimmer text-[11px]">
+                                This application runs completely inside your browser using client-side mock APIs and voice/chat simulation. No local backend is required!
+                            </p>
+                            <ul className="list-disc pl-4 space-y-1 text-txt-dimmer text-[10px]">
+                                <li>Use <strong>Quick Demo Login</strong> below to enter.</li>
+                                <li>Simulate real-time voice calls using native browser speech.</li>
+                                <li>View logged voice tickets in the report section.</li>
+                            </ul>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
@@ -86,17 +101,17 @@ export default function LoginPage() {
                         <div className="flex gap-4">
                             <button
                                 type="button"
-                                onClick={() => { setEmail('admin@admin.com'); setPassword('admin123'); }}
+                                onClick={() => { setEmail('admin@example.com'); setPassword('admin123'); }}
                                 className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-txt text-xs font-semibold rounded-xl border border-white/10 transition-all text-center"
                             >
                                 Admin Account
                             </button>
                             <button
                                 type="button"
-                                onClick={() => { setEmail('abhi@gmail.com'); setPassword('admin123'); }}
+                                onClick={() => { setEmail('callee@example.com'); setPassword('admin123'); }}
                                 className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-txt text-xs font-semibold rounded-xl border border-white/10 transition-all text-center"
                             >
-                                Callee (Abhi)
+                                Callee (Alex)
                             </button>
                         </div>
                     </div>

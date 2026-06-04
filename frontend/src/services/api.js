@@ -20,22 +20,40 @@ if (isServedFromBackend || !isLocal) {
 
 // ========== DEMO MODE MOCK DATABASE & INTERCEPTOR ==========
 export const isDemoMode = () => {
-  const host = window.location.hostname;
-  const isStaticHost = host.includes('netlify.app') || host.includes('vercel.app') || host.includes('github.io');
   const manualMode = localStorage.getItem('demo_mode');
   if (manualMode === null) {
-    return isStaticHost; // default to true on Netlify/Vercel
+    return true; // Default to Demo Mode on all hosts (including localhost) to run standalone out-of-the-box
   }
   return manualMode === 'true';
 };
 
+const safeGetLocalStorageJSON = (key, fallback = '[]') => {
+  const val = localStorage.getItem(key);
+  if (!val || val === 'undefined') {
+    try {
+      return JSON.parse(fallback);
+    } catch (e) {
+      return null;
+    }
+  }
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    try {
+      return JSON.parse(fallback);
+    } catch (err) {
+      return null;
+    }
+  }
+};
+
 const initMockDB = () => {
-  if (!localStorage.getItem('mock_db_initialized')) {
+  if (!localStorage.getItem('mock_db_initialized_v3')) {
     const defaultUsers = [
-      { id: 1, email: "admin@admin.com", display_name: "Admin", is_admin: true, is_active: true, ai_enabled: true, ai_voice_model: "en_US-ryan-medium", ai_collect_data: true, ai_greeting_name: "Admin Support" },
-      { id: 9, email: "abhi@gmail.com", display_name: "Abhi", is_admin: false, is_active: true, ai_enabled: true, ai_voice_model: "en_US-ryan-medium", ai_collect_data: true, ai_greeting_name: "Abhi's Desk" },
-      { id: 4, email: "dhiraj@gmail.com", display_name: "Dhiraj", is_admin: false, is_active: true, ai_enabled: true, ai_voice_model: "en_US-lessac-medium", ai_collect_data: true, ai_greeting_name: "Dhiraj's Assistant" },
-      { id: 3, email: "abhishekhiremath215@gmail.com", display_name: "Abhishek", is_admin: false, is_active: true, ai_enabled: true, ai_voice_model: "en_US-ryan-medium", ai_collect_data: true, ai_greeting_name: "Abhishek support" }
+      { id: 1, email: "admin@example.com", display_name: "Admin", is_admin: true, is_active: true, ai_enabled: true, ai_voice_model: "en_US-ryan-medium", ai_collect_data: true, ai_greeting_name: "Admin Support" },
+      { id: 9, email: "callee@example.com", display_name: "Alex", is_admin: false, is_active: true, ai_enabled: true, ai_voice_model: "en_US-ryan-medium", ai_collect_data: true, ai_greeting_name: "Alex's Desk" },
+      { id: 4, email: "jane@example.com", display_name: "Jane", is_admin: false, is_active: true, ai_enabled: true, ai_voice_model: "en_US-lessac-medium", ai_collect_data: true, ai_greeting_name: "Jane's Assistant" },
+      { id: 3, email: "john@example.com", display_name: "John", is_admin: false, is_active: true, ai_enabled: true, ai_voice_model: "en_US-ryan-medium", ai_collect_data: true, ai_greeting_name: "John's support" }
     ];
     
     const defaultCollectedData = [
@@ -86,10 +104,44 @@ const initMockDB = () => {
       { id: 102, caller_id: 3, callee_id: 1, call_type: "audio", status: "ended", ai_handled: true, started_at: new Date(Date.now() - 7200000).toISOString(), ended_at: new Date(Date.now() - 7150000).toISOString() }
     ];
 
+    const defaultConversations = [
+      {
+        id: 1,
+        other_user: { id: 9, email: "callee@example.com", display_name: "Alex", is_online: true, ai_enabled: true },
+        unread_count: 0
+      },
+      {
+        id: 2,
+        other_user: { id: 4, email: "jane@example.com", display_name: "Jane", is_online: false, ai_enabled: true },
+        unread_count: 0
+      }
+    ];
+
+    const defaultMessages = [
+      {
+        id: 1,
+        conversation_id: 1,
+        sender_id: 9,
+        content: "Hi Admin! I setup CallPilot AI on my desk. Can you try calling me?",
+        is_ai_generated: false,
+        created_at: new Date(Date.now() - 7200000).toISOString()
+      },
+      {
+        id: 2,
+        conversation_id: 1,
+        sender_id: 1,
+        content: "Sure Alex, I will test the voice receptionist agent on your line now.",
+        is_ai_generated: false,
+        created_at: new Date(Date.now() - 3600000).toISOString()
+      }
+    ];
+
     localStorage.setItem('mock_users', JSON.stringify(defaultUsers));
     localStorage.setItem('mock_collected_data', JSON.stringify(defaultCollectedData));
     localStorage.setItem('mock_call_history', JSON.stringify(defaultCallHistory));
-    localStorage.setItem('mock_db_initialized', 'true');
+    localStorage.setItem('mock_conversations', JSON.stringify(defaultConversations));
+    localStorage.setItem('mock_messages', JSON.stringify(defaultMessages));
+    localStorage.setItem('mock_db_initialized_v3', 'true');
   }
 };
 
@@ -175,7 +227,7 @@ class MockWebSocket {
       const callId = data.call_id;
       
       // Append user speech to mock transcript
-      const transcript = JSON.parse(localStorage.getItem('active_call_transcript') || '[]');
+      const transcript = safeGetLocalStorageJSON('active_call_transcript', '[]');
       transcript.push(`User: ${text}`);
       localStorage.setItem('active_call_transcript', JSON.stringify(transcript));
 
@@ -188,7 +240,7 @@ class MockWebSocket {
         const replyText = getMockAIReply(text);
         
         // Append AI response to mock transcript
-        const updatedTranscript = JSON.parse(localStorage.getItem('active_call_transcript') || '[]');
+        const updatedTranscript = safeGetLocalStorageJSON('active_call_transcript', '[]');
         updatedTranscript.push(`AI: ${replyText}`);
         localStorage.setItem('active_call_transcript', JSON.stringify(updatedTranscript));
 
@@ -201,6 +253,69 @@ class MockWebSocket {
           });
         }
       }, 1500);
+    }
+
+    if (data.action === 'send_message') {
+      const { conversation_id, content } = data;
+      const messages = safeGetLocalStorageJSON('mock_messages', '[]');
+      const currentUser = getUser() || { id: 1 };
+      
+      const newMsg = {
+        id: messages.length + 1,
+        conversation_id: parseInt(conversation_id),
+        sender_id: currentUser.id,
+        content,
+        is_ai_generated: false,
+        created_at: new Date().toISOString()
+      };
+      messages.push(newMsg);
+      localStorage.setItem('mock_messages', JSON.stringify(messages));
+      
+      // Trigger new message event back to the WebSocket client
+      this.triggerMessage({
+        type: 'new_message',
+        message: newMsg
+      });
+      
+      // Simulate reply from the other participant
+      setTimeout(() => {
+        const convos = safeGetLocalStorageJSON('mock_conversations', '[]');
+        const currentConvo = convos.find(c => c.id === parseInt(conversation_id));
+        const otherUser = currentConvo ? currentConvo.other_user : { id: 9, display_name: "Abhi" };
+        
+        const replyMsg = {
+          id: messages.length + 2,
+          conversation_id: parseInt(conversation_id),
+          sender_id: otherUser.id,
+          content: `Hi! This is ${otherUser.display_name}. I received your message: "${content}". This is an automated response from my CallPilot receptionist assistant.`,
+          is_ai_generated: true,
+          created_at: new Date().toISOString()
+        };
+        
+        const updatedMsgs = safeGetLocalStorageJSON('mock_messages', '[]');
+        updatedMsgs.push(replyMsg);
+        localStorage.setItem('mock_messages', JSON.stringify(updatedMsgs));
+        
+        if (this.readyState === 1) {
+          // Trigger typing indicator first
+          this.triggerMessage({
+            type: 'typing',
+            conversation_id: parseInt(conversation_id),
+            user_name: otherUser.display_name
+          });
+          
+          setTimeout(() => {
+            this.triggerMessage({
+              type: 'new_message',
+              message: replyMsg
+            });
+          }, 800);
+        }
+      }, 1000);
+    }
+    
+    if (data.action === 'typing') {
+      console.log('[MOCK WS] User is typing in conversation:', data.conversation_id);
     }
   }
 
@@ -229,9 +344,9 @@ const handleMockRequest = async (url, options = {}) => {
   }
   
   // Helper to read database
-  const getUsers = () => JSON.parse(localStorage.getItem('mock_users') || '[]');
-  const getCollectedData = () => JSON.parse(localStorage.getItem('mock_collected_data') || '[]');
-  const getCallHistory = () => JSON.parse(localStorage.getItem('mock_call_history') || '[]');
+  const getUsers = () => safeGetLocalStorageJSON('mock_users', '[]');
+  const getCollectedData = () => safeGetLocalStorageJSON('mock_collected_data', '[]');
+  const getCallHistory = () => safeGetLocalStorageJSON('mock_call_history', '[]');
   
   // Helpers to write database
   const saveUsers = (data) => localStorage.setItem('mock_users', JSON.stringify(data));
@@ -331,7 +446,7 @@ const handleMockRequest = async (url, options = {}) => {
         const greetingName = callee?.ai_greeting_name || callee?.display_name || "the support representative";
         const greetingText = `Hello! Thank you for calling ${greetingName}. How can I assist you today?`;
         
-        const transcript = JSON.parse(localStorage.getItem('active_call_transcript') || '[]');
+        const transcript = safeGetLocalStorageJSON('active_call_transcript', '[]');
         transcript.push(`AI: ${greetingText}`);
         localStorage.setItem('active_call_transcript', JSON.stringify(transcript));
 
@@ -363,7 +478,7 @@ const handleMockRequest = async (url, options = {}) => {
       saveCallHistory(history);
     }
 
-    const transcript = JSON.parse(localStorage.getItem('active_call_transcript') || '[]');
+    const transcript = safeGetLocalStorageJSON('active_call_transcript', '[]');
     const callerName = localStorage.getItem('mock_captured_name') || 'Alice Cooper';
     const callerPhone = localStorage.getItem('mock_captured_phone') || '987-654-3210';
     const callerNeed = localStorage.getItem('mock_captured_need') || 'Emergency plumbing service due to a leaking sink';
@@ -463,6 +578,83 @@ const handleMockRequest = async (url, options = {}) => {
       ai_calls: history.filter(h => h.ai_handled).length,
       collected_data: collected.length
     });
+  }
+
+  // 13. Chat Conversations List
+  if (path === '/api/chat/conversations' && method === 'GET') {
+    const conversations = safeGetLocalStorageJSON('mock_conversations', '[]');
+    const messages = safeGetLocalStorageJSON('mock_messages', '[]');
+    const enriched = conversations.map(c => {
+      const convoMsgs = messages.filter(m => m.conversation_id === c.id);
+      const lastMsg = convoMsgs.length > 0 ? convoMsgs[convoMsgs.length - 1] : null;
+      return {
+        ...c,
+        last_message: lastMsg ? { id: lastMsg.id, content: lastMsg.content, created_at: lastMsg.created_at } : null
+      };
+    });
+    return jsonResponse(enriched);
+  }
+
+  // 14. Create Chat Conversation
+  if (path === '/api/chat/conversations' && method === 'POST') {
+    const { email } = JSON.parse(options.body || '{}');
+    const users = getUsers();
+    const targetUser = users.find(u => u.email === email);
+    if (!targetUser) {
+      return jsonResponse({ detail: "User not found" }, 404);
+    }
+    const conversations = safeGetLocalStorageJSON('mock_conversations', '[]');
+    let existing = conversations.find(c => c.other_user.email === email);
+    if (!existing) {
+      existing = {
+        id: conversations.length + 1,
+        other_user: { id: targetUser.id, email: targetUser.email, display_name: targetUser.display_name, is_online: true, ai_enabled: targetUser.ai_enabled },
+        unread_count: 0
+      };
+      conversations.push(existing);
+      localStorage.setItem('mock_conversations', JSON.stringify(conversations));
+    }
+    return jsonResponse(existing);
+  }
+
+  // 15. Get Chat Messages
+  if (path.startsWith('/api/chat/conversations/') && path.endsWith('/messages') && method === 'GET') {
+    const segments = path.split('/');
+    const conversationId = parseInt(segments[segments.length - 2]);
+    const messages = safeGetLocalStorageJSON('mock_messages', '[]');
+    const convoMsgs = messages.filter(m => m.conversation_id === conversationId);
+    return jsonResponse(convoMsgs);
+  }
+
+  // 16. Admin Users List
+  if (path === '/api/admin/users' && method === 'GET') {
+    const users = getUsers();
+    return jsonResponse({ users });
+  }
+
+  // 17. Admin Update User
+  if (path.startsWith('/api/admin/users/') && method === 'PUT') {
+    const segments = path.split('/');
+    const userId = parseInt(segments[segments.length - 1]);
+    const body = JSON.parse(options.body || '{}');
+    const users = getUsers();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx !== -1) {
+      users[idx] = { ...users[idx], ...body };
+      saveUsers(users);
+      return jsonResponse(users[idx]);
+    }
+    return jsonResponse({ detail: "User not found" }, 404);
+  }
+
+  // 18. Admin Delete User
+  if (path.startsWith('/api/admin/users/') && method === 'DELETE') {
+    const segments = path.split('/');
+    const userId = parseInt(segments[segments.length - 1]);
+    const users = getUsers();
+    const filtered = users.filter(u => u.id !== userId);
+    saveUsers(filtered);
+    return jsonResponse({ detail: "User deleted successfully" });
   }
 
   return jsonResponse({ detail: "Endpoint mocked successfully" });
@@ -604,6 +796,9 @@ export const chatAPI = {
   },
 
   connectWebSocket: (token) => {
+    if (isDemoMode()) {
+      return new MockWebSocket(`${WS_BASE}/api/chat/ws/${token}`);
+    }
     const ws = new WebSocket(`${WS_BASE}/api/chat/ws/${token}`);
     return ws;
   },
